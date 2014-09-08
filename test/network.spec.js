@@ -96,11 +96,11 @@ describe("Network", function() {
 
     describe("Server", function() {
 
-        it("should respond ping with a pong", function() {
+        it("should respond 'ping' with a 'pong'", function() {
 
             var mock = SocketMock();
             var clientMock = SocketMock();
-            var s = Server(mock);
+            var s = Server({'socket': mock});
 
             mock.call('connection', clientMock);
 
@@ -109,13 +109,13 @@ describe("Network", function() {
 
         });
 
-        it("should send messages to other connected clients", function() {
+        it("should send 'message's to other connected clients", function() {
 
             var mock = SocketMock();
             var client1 = SocketMock();
             var client2 = SocketMock();
             var client3 = SocketMock();
-            var s = Server(mock);
+            var s = Server({'socket': mock});
 
             mock.call('connection', client1);
             mock.call('connection', client2);
@@ -130,7 +130,38 @@ describe("Network", function() {
             expect(client2.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(toSelf));
             expect(client3.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(toOthers));
         
-        })
+        });
+
+        it("should respond to 'uptime'", function() {
+
+            var time = 10;
+            var mock = SocketMock();
+            var s = Server({'socket': mock, 'timer': function() { return time; }});
+
+            time = 30;
+            var client = SocketMock();
+            mock.call('connection', client);
+
+            time = 70;
+            client.call('data', {'cmd': 'uptime'});
+
+            var message = {'cmd':'message', 'arg':60};
+            expect(client.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(message));
+
+        });
+
+        it("should return token/identifier", function() {
+
+            var mock = SocketMock();
+            var s = Server({'socket': mock});
+
+            var client = SocketMock();
+            mock.call('connection', client);
+
+            client.call('data', {'cmd': 'ping', 'token': 42});
+            expect(client.emit).toHaveBeenCalledWith('data', jasmine.objectContaining({'token':42}));
+
+        });
 
     });
 

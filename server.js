@@ -25,4 +25,4 @@ httpServer.listen(port, ipaddr);
 
 var socket = socketio.listen(httpServer);
 
-server.Server(socket);
+server.Server({'socket': socket});

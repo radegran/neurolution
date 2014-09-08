@@ -1,5 +1,9 @@
-var Server = function(mainSocket) {
+var Server = function(options) {
 
+    var mainSocket = options.socket;
+    var currentTime = options.timer || Date.now;
+
+    var startTime = currentTime();
     var clientSockets = [];
 
     mainSocket.on('connection', function(clientSocket) {
@@ -19,30 +23,60 @@ var Server = function(mainSocket) {
 
         clientSocket.on('data', function(data) {
 
+            // Aww its gonna be GREAT to refactor this
+            var response = {};
+            if (data.token) {
+                response.token = data.token;
+            }
+
             if (data.cmd == 'ping') {
-                send({'cmd':'pong'});
+
+                response.cmd = 'pong'
+                send(response);
+
             }
             else if (data.cmd == 'help') {
-                send({'cmd': 'message', 'arg': [
+
+                response.cmd = 'message';
+                response.arg = [
                     'Commands:',
                     '- ping, ask for a pong',
                     '- message (m), send chat message',
-                    '- help, show this text'
-                ]});
+                    '- help',
+                    '- uptime'
+                ];
+                send(response);
+
             } 
+            else if (data.cmd == 'uptime') {
+
+                var uptime = currentTime() - startTime;
+                response.cmd = 'message';
+                response.arg = uptime;
+                send(response);
+
+            }
             else if (data.cmd == 'message' || data.cmd == 'm') {
+
                 clientSockets.forEach(function(cs) {
                     if (cs === clientSocket) {
-                        cs.emit('data', {'cmd':'message', 'arg': 'you: ' + data.arg});
+                        response.cmd = 'message';
+                        response.arg = 'you: ' + data.arg;
+                        cs.emit('data', response);
                     }
                     else {
                         cs.emit('data', {'cmd':'message', 'arg': 'someone: ' + data.arg});
                     }
                 });
+
             }
             else {
-                // assume 'help' command
-                send({'cmd':'message', 'arg': "Unknown command, try 'help'."});
+
+                // unknown command
+                response.cmd = 'message';
+                response.arg = "Unknown command, try 'help'.";
+                send(response);
+
             }
 
         });

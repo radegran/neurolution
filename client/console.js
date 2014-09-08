@@ -9,13 +9,14 @@ var Console = function() {
         'position': 'absolute',
         'left': '2px',
         'right': '2px',
-        'height': '100px',
+        'height': '200px',
         'background-color': '#E0E0F0',
         'padding': '2px',
         'font-family': 'Lucida Console',
         'font-size': '11'
     });
     $messages.css({
+        'width': '100%',
         'position': 'absolute',
         'bottom': '20px'
     });

@@ -7,10 +7,12 @@ $(document).ready(function() {
     cons.onInput(function(text) {
 
         var strs = text.split(' ');
-        var cmd = strs.shift();
-        var arg = strs.join(' ');
+        var request = {};
+        request.cmd = strs.shift();
+        request.arg = strs.join(' ');
+        request.token = request.cmd
 
-        client.send({'cmd': cmd, 'arg': arg});
+        client.send(request);
 
     });
 
@@ -19,7 +21,21 @@ $(document).ready(function() {
     client.receive(function(data) {
 
         if (data.cmd == 'message') {
-            cons.log(data.arg);
+            if (data.token == 'uptime') {
+                var t = data.arg;
+                var secs = t / 1000;
+                var mins = secs / 60;
+                var hours = mins / 60;
+                var days = hours / 24;
+                var str = days > 1 ? (Math.floor(days) + " days") :
+                          hours > 1 ? (Math.floor(hours) + " hours") :
+                          mins > 1 ? (Math.floor(mins) + " minutes") :
+                          Math.floor(secs) + " seconds";
+                cons.log('Up for ' + str);
+            }
+            else {
+               cons.log(data.arg);
+            }
         }
         else if (data.cmd) {
             cons.log(data.cmd);
