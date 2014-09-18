@@ -7074,9 +7074,8 @@ var Client = function(socket) {
     return client;
 
 };
-var Console = function() {
+var Console = function($container) {
 
-    var $container = $('<div/>');
     var $messages = $('<div/>');
     var $prompt = $('<div/>');
     var $input = $('<input/>');
@@ -7108,8 +7107,6 @@ var Console = function() {
         'width': '100%',
     })
 
-    $(document.body).css('margin', '0px');
-    $(document.body).append($container);
     $container.append($messages);
     $container.append($prompt);
     $prompt.append($input);
@@ -7151,7 +7148,7 @@ $(document).ready(function() {
 
     var socket = io();
     var client = Client(socket);
-    var cons = Console();
+    var cons = Console($('#console'));
 
     cons.onInput(function(text) {
 

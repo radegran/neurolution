@@ -1,6 +1,5 @@
-var Console = function() {
+var Console = function($container) {
 
-    var $container = $('<div/>');
     var $messages = $('<div/>');
     var $prompt = $('<div/>');
     var $input = $('<input/>');
@@ -32,8 +31,6 @@ var Console = function() {
         'width': '100%',
     })
 
-    $(document.body).css('margin', '0px');
-    $(document.body).append($container);
     $container.append($messages);
     $container.append($prompt);
     $prompt.append($input);
