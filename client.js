@@ -2,7 +2,8 @@ $(document).ready(function() {
 
     var socket = io();
     var client = Client(socket);
-    var cons = Console();
+    var cons = Console($('#console'));
+    MainView($('#main'));
 
     cons.onInput(function(text) {
 

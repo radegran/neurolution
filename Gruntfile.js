@@ -26,6 +26,7 @@ module.exports = function(grunt) {
             'client/three.min.js',
             'client/socketclient.js',
             'client/console.js',
+            'client/view/main.js',
             'client.js'
           ]
         }
@@ -88,7 +89,7 @@ module.exports = function(grunt) {
 //  },
     watch: {
       src: {
-        files: ['server/*.js', 'client/*.js', 'common/*.js', 'client.js'],
+        files: ['server/**/*.js', 'client/**/*.js', 'common/**/*.js', 'client.js'],
         tasks: ['default', 'test']
       },
       /*

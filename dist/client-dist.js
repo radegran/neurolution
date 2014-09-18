@@ -7084,11 +7084,11 @@ var Console = function($container) {
         'position': 'absolute',
         'left': '2px',
         'right': '2px',
-        'height': '200px',
         'background-color': '#E0E0F0',
         'padding': '2px',
         'font-family': 'Lucida Console',
-        'font-size': '11'
+        'font-size': '11',
+        'opacity': '0.7'
     });
     $messages.css({
         'width': '100%',
@@ -7127,15 +7127,24 @@ var Console = function($container) {
     var inputCallback = function() {};
     $input.trigger('focus');
     $input.keydown(function (e) {
+
         if (e.which == 13) {
+            // Enter
             if (inputCallback) {
                 var text = $input.val();
                 inputCallback(text);
                 log("> " + text);
                 $input.val('');
             }
+        } else if (e.which == 27) {
+            // ESC
+            $input.trigger('blur');
         }
     });
+
+    $input.on('focus', function() { $container.animate({'height': '50%'}, 150); });
+    $input.on('blur', function() { $container.animate({'height': '16px'}, 150); });
+    $input.trigger('focus');
 
     return {
         'log': log,
@@ -7144,11 +7153,79 @@ var Console = function($container) {
         }
     }
 };
+var MainView = function($container) {
+
+    var width = $container.width();
+    var height = $container.height();
+    var viewAngle = 45;
+    var aspectRatio = width / height;
+    var near = 0.1;
+    var far = 10000;
+
+    var renderer = new THREE.WebGLRenderer();
+    var camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far);
+    var scene = new THREE.Scene();
+
+    scene.add(camera);
+
+    camera.position.z = 300;
+
+    renderer.setSize(width, height);
+
+    $container.append(renderer.domElement);
+
+    // set up the sphere vars
+    var radius = 50,
+        segments = 16,
+        rings = 16;
+
+    var sphereMaterial =
+      new THREE.MeshLambertMaterial(
+        {
+          color: 0xCC0000
+        });
+
+    // create a new mesh with
+    // sphere geometry - we will cover
+    // the sphereMaterial next!
+    var sphere = new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+        radius,
+        segments,
+        rings),
+
+      sphereMaterial);
+
+    // add the sphere to the scene
+    scene.add(sphere);
+
+
+
+    // create a point light
+var pointLight =
+  new THREE.PointLight(0xFFFFFF);
+
+// set its position
+pointLight.position.x = 10;
+pointLight.position.y = 50;
+pointLight.position.z = 130;
+
+// add to the scene
+scene.add(pointLight);
+
+
+
+renderer.render(scene, camera);
+};
+
+
 $(document).ready(function() {
 
     var socket = io();
     var client = Client(socket);
     var cons = Console($('#console'));
+    MainView($('#main'));
 
     cons.onInput(function(text) {
 

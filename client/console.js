@@ -8,11 +8,11 @@ var Console = function($container) {
         'position': 'absolute',
         'left': '2px',
         'right': '2px',
-        'height': '200px',
         'background-color': '#E0E0F0',
         'padding': '2px',
         'font-family': 'Lucida Console',
-        'font-size': '11'
+        'font-size': '11',
+        'opacity': '0.7'
     });
     $messages.css({
         'width': '100%',
@@ -51,15 +51,24 @@ var Console = function($container) {
     var inputCallback = function() {};
     $input.trigger('focus');
     $input.keydown(function (e) {
+
         if (e.which == 13) {
+            // Enter
             if (inputCallback) {
                 var text = $input.val();
                 inputCallback(text);
                 log("> " + text);
                 $input.val('');
             }
+        } else if (e.which == 27) {
+            // ESC
+            $input.trigger('blur');
         }
     });
+
+    $input.on('focus', function() { $container.animate({'height': '50%'}, 150); });
+    $input.on('blur', function() { $container.animate({'height': '16px'}, 150); });
+    $input.trigger('focus');
 
     return {
         'log': log,
