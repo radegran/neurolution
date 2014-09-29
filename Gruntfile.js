@@ -22,11 +22,7 @@ module.exports = function(grunt) {
         files: {
           'dist/client-dist.js': [
             'node_modules/socket.io-client/socket.io.js',
-            'client/jquery-2.1.1.min.js',
-            'client/three.min.js',
-            'client/socketclient.js',
-            'client/console.js',
-            'client/view/main.js',
+            'client/**/*.js',
             'client.js'
           ]
         }
