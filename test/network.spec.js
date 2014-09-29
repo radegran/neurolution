@@ -96,69 +96,72 @@ describe("Network", function() {
 
     describe("Server", function() {
 
-        it("should respond 'ping' with a 'pong'", function() {
+        it("should delegate to commands", function() {
 
             var mock = SocketMock();
             var clientMock = SocketMock();
-            var s = SocketServer({'socket': mock});
+            var command = {
+                'id': 'hello',
+                'handler': function(response) {
+                    response.sendMessage('world!');
+                }
+            };
+            var s = SocketServer({'socket': mock, 'commands': {'hello': command}});
 
             mock.call('connection', clientMock);
 
-            clientMock.call('data', {'cmd':'ping'});
-            expect(clientMock.emit).toHaveBeenCalledWith('data', jasmine.objectContaining({'cmd':'pong'}));
+            clientMock.call('data', {'cmd':'hello'});
+            expect(clientMock.emit).toHaveBeenCalledWith('data', 
+                jasmine.objectContaining({'cmd':'message', 'arg': 'world!'}));
 
         });
 
-        it("should send 'message's to other connected clients", function() {
+        it("should broadcast to other connected clients", function() {
 
             var mock = SocketMock();
             var client1 = SocketMock();
             var client2 = SocketMock();
             var client3 = SocketMock();
-            var s = SocketServer({'socket': mock});
+
+            var command = {
+                'id': 'broadcast',
+                'handler': function(response, arg) {
+                    response.broadcastMessage('ALL: ' + arg);
+                }
+            };
+
+            var s = SocketServer({'socket': mock, 'commands': {'broadcast': command}});
 
             mock.call('connection', client1);
             mock.call('connection', client2);
             mock.call('connection', client3);
 
-            var message = {'cmd':'message', 'arg': 'hello all'};
-            var toOthers = {'cmd':'message', 'arg': 'someone: hello all'};
-            var toSelf = {'cmd':'message', 'arg': 'you: hello all'};
-
+            var message = {'cmd':'broadcast', 'arg': 'my message'};
+            var toOthers = {'cmd':'message', 'arg': 'ALL: my message'};
+            
             client2.call('data', message);
             expect(client1.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(toOthers));
-            expect(client2.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(toSelf));
+            expect(client2.emit).not.toHaveBeenCalled();
             expect(client3.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(toOthers));
         
-        });
-
-        it("should respond to 'uptime'", function() {
-
-            var time = 10;
-            var mock = SocketMock();
-            var s = SocketServer({'socket': mock, 'timer': function() { return time; }});
-
-            time = 30;
-            var client = SocketMock();
-            mock.call('connection', client);
-
-            time = 70;
-            client.call('data', {'cmd': 'uptime'});
-
-            var message = {'cmd':'message', 'arg':60};
-            expect(client.emit).toHaveBeenCalledWith('data', jasmine.objectContaining(message));
-
         });
 
         it("should return token/identifier", function() {
 
             var mock = SocketMock();
-            var s = SocketServer({'socket': mock});
+
+            var command = {
+                'id': 'test',
+                'handler': function(response, arg) {
+                    response.sendMessage('___');
+                }
+            };
+            var s = SocketServer({'socket': mock, 'commands': {'test': command}});
 
             var client = SocketMock();
             mock.call('connection', client);
 
-            client.call('data', {'cmd': 'ping', 'token': 42});
+            client.call('data', {'cmd': 'test', 'token': 42});
             expect(client.emit).toHaveBeenCalledWith('data', jasmine.objectContaining({'token':42}));
 
         });

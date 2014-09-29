@@ -2,6 +2,7 @@ var SocketServer = function(options) {
 
     var mainSocket = options.socket;
     var currentTime = options.timer || Date.now;
+    var commands = options.commands || {};
 
     var startTime = currentTime();
     var clientSockets = [];
@@ -17,65 +18,44 @@ var SocketServer = function(options) {
             }
         });
 
-        var send = function(data) {
-            clientSocket.emit('data', data);
-        };
-
         clientSocket.on('data', function(data) {
 
-            // Aww its gonna be GREAT to refactor this
-            var response = {};
-            if (data.token) {
-                response.token = data.token;
-            }
+            var sendMessage = function(socket, message) {
 
-            if (data.cmd == 'ping') {
+                socket.emit('data', {'cmd': 'message', 'arg': message, 'token': data.token});
 
-                response.cmd = 'pong'
-                send(response);
+            };
 
-            }
-            else if (data.cmd == 'help') {
+            var sender = {
 
-                response.cmd = 'message';
-                response.arg = [
-                    'Commands:',
-                    '- ping, ask for a pong',
-                    '- message (m), send chat message',
-                    '- help',
-                    '- uptime'
-                ];
-                send(response);
+                'sendMessage': function(message) {
 
-            } 
-            else if (data.cmd == 'uptime') {
+                    sendMessage(clientSocket, message)
 
-                var uptime = currentTime() - startTime;
-                response.cmd = 'message';
-                response.arg = uptime;
-                send(response);
+                },
 
-            }
-            else if (data.cmd == 'message' || data.cmd == 'm') {
+                'broadcastMessage': function(message) {
+                    
+                    clientSockets.forEach(function(cs) {
+                        if (cs !== clientSocket) {
+                            sendMessage(cs, message);
+                        }                    
+                    });
 
-                clientSockets.forEach(function(cs) {
-                    if (cs === clientSocket) {
-                        response.cmd = 'message';
-                        response.arg = 'you: ' + data.arg;
-                        cs.emit('data', response);
-                    }
-                    else {
-                        cs.emit('data', {'cmd':'message', 'arg': 'someone: ' + data.arg});
-                    }
-                });
+                }
 
-            }
-            else {
+            };
 
-                // unknown command
-                response.cmd = 'message';
-                response.arg = "Unknown command, try 'help'.";
-                send(response);
+            var response = {'token': data.token};
+
+            if (commands.hasOwnProperty(data.cmd)) {
+
+                var command = commands[data.cmd];
+                command.handler(sender, data.arg);
+
+            } else {
+
+                sendMessage(clientSocket, "Unknown command, try 'help'");
 
             }
 
