@@ -1,4 +1,4 @@
-var Server = function(options) {
+var SocketServer = function(options) {
 
     var mainSocket = options.socket;
     var currentTime = options.timer || Date.now;
@@ -85,8 +85,15 @@ var Server = function(options) {
 
 };
 
+var createSocket = function(nodeSocketIo, httpServer) {
+
+    return nodeSocketIo.listen(httpServer);
+
+};
+
 if (typeof module !== 'undefined') {
     module.exports = {
-        'Server': Server
+        'SocketServer': SocketServer,
+        'createSocket': createSocket
     };
 }

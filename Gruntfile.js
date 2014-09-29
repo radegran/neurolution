@@ -89,7 +89,7 @@ module.exports = function(grunt) {
 //  },
     watch: {
       src: {
-        files: ['server/**/*.js', 'client/**/*.js', 'common/**/*.js', 'client.js'],
+        files: ['server/**/*.js', 'client/**/*.js', 'common/**/*.js', 'client.js', 'main.js'],
         tasks: ['default', 'test']
       },
       /*

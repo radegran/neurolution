@@ -100,7 +100,7 @@ describe("Network", function() {
 
             var mock = SocketMock();
             var clientMock = SocketMock();
-            var s = Server({'socket': mock});
+            var s = SocketServer({'socket': mock});
 
             mock.call('connection', clientMock);
 
@@ -115,7 +115,7 @@ describe("Network", function() {
             var client1 = SocketMock();
             var client2 = SocketMock();
             var client3 = SocketMock();
-            var s = Server({'socket': mock});
+            var s = SocketServer({'socket': mock});
 
             mock.call('connection', client1);
             mock.call('connection', client2);
@@ -136,7 +136,7 @@ describe("Network", function() {
 
             var time = 10;
             var mock = SocketMock();
-            var s = Server({'socket': mock, 'timer': function() { return time; }});
+            var s = SocketServer({'socket': mock, 'timer': function() { return time; }});
 
             time = 30;
             var client = SocketMock();
@@ -153,7 +153,7 @@ describe("Network", function() {
         it("should return token/identifier", function() {
 
             var mock = SocketMock();
-            var s = Server({'socket': mock});
+            var s = SocketServer({'socket': mock});
 
             var client = SocketMock();
             mock.call('connection', client);
