@@ -32,7 +32,33 @@ var UpTime = function(currentTimeFunc) {
 
 };
 
-var getCommands = function() {
+var TestDb = function(db) {
+
+    return Command('testdb')
+        .desc("test database")
+        .handler(function(response, arg) {
+
+            db.find({'id': 'test'}, function(obj) {
+
+                var counter = 0;
+
+                if (obj)
+                {
+                    counter = obj.counter;
+                    db.remove(obj);                    
+                }
+
+                db.save({'id': 'test', 'counter': counter+1});
+
+                response.sendMessage("Counter: " + counter);
+
+            });
+
+        });
+
+};
+
+var get = function(db) {
 
     var commandList = null;
 
@@ -60,7 +86,9 @@ var getCommands = function() {
             response.sendMessage(strings);
         });
 
-    commandList = [ping, uptime, message, help];
+    var testdb = TestDb(db);
+
+    commandList = [ping, uptime, message, testdb, help];
 
     // End of command declaration
 
@@ -73,6 +101,6 @@ var getCommands = function() {
 
 if (typeof module !== 'undefined') {
     module.exports = {
-        'get': getCommands
+        'get': get
     };
 }
