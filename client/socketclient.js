@@ -4,7 +4,7 @@ var Client = function(socket) {
 
     var connectCallback = function() {};
     var disconnectCallback = function() {};
-    var receiveCallback = function() {};
+    var receiveCallbacks = [];
 
     var connect = function() {
         isConnected = true;
@@ -21,8 +21,11 @@ var Client = function(socket) {
     socket.on('disconnect', disconnect);
     socket.on('reconnect', function() {});
     socket.on('reconnect_error', function() {});
-    socket.on('data', function(data) { receiveCallback(data); });
+    socket.on('data', function(data) {
 
+        receiveCallbacks.forEach(function(cb) { cb(data); }); 
+    
+    });
 
     var client = {
         'on': function(event, callback) {
@@ -40,7 +43,7 @@ var Client = function(socket) {
             socket.emit('data', data);
         },
         'receive': function(callback) {
-            receiveCallback = callback;
+            receiveCallbacks.push(callback);
         }
     };
 

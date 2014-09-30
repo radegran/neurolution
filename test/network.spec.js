@@ -77,18 +77,21 @@ describe("Network", function() {
 
         });
 
-        it("should receive data", function() {
+        it("should receive data (multiple receive callbacks)", function() {
 
             var mock = SocketMock();
             var c = Client(mock);
-            var spy = jasmine.createSpy('receiveCallback');
-            c.receive(spy);
-            var obj = {'hello': 'world'};
+            var spy1 = jasmine.createSpy('receiveCallback1');
+            var spy2 = jasmine.createSpy('receiveCallback2');
+            c.receive(spy1);
+            c.receive(spy2);
 
+            var obj = {'hello': 'world'};
             mock.call('connect');
             mock.call('data', obj)
 
-            expect(spy).toHaveBeenCalledWith(obj);
+            expect(spy1).toHaveBeenCalledWith(obj);
+            expect(spy2).toHaveBeenCalledWith(obj);
 
         });
 
