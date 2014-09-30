@@ -23,6 +23,7 @@ module.exports = function(grunt) {
           'dist/client-dist.js': [
             'node_modules/socket.io-client/socket.io.js',
             'client/**/*.js',
+            'common/**/*.js',
             'client.js'
           ]
         }

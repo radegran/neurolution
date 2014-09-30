@@ -6244,24 +6244,26 @@ var Console = {
             }
         }
 
-        var inputCallback = function() {};
+        var inputCallbacks = [];
+        var onChangeCallbacks = [];
+
         $input.trigger('focus');
         $input.keydown(function (e) {
 
             if (e.which == 13) {
                 // Enter
-                if (inputCallback) {
-                    var text = $input.val();
-                    inputCallback(text);
-                    log("> " + text);
-                    $input.val('');
-                }
+                var text = $input.val();
+                log("> " + text);
+                $input.val('');
+                inputCallbacks.forEach(function(cb) { cb(text); });
+  
             } else if (e.which == 27) {
                 // ESC
                 $input.trigger('blur');
             }
         });
 
+        $input.on('change', function() { onChangeCallbacks.forEach(function(cb) { cb($input.val()); }); });
         $input.on('focus', function() { $container.animate({'height': '50%'}, 150); });
         $input.on('blur', function() { $container.animate({'height': '16px'}, 150); });
         $input.trigger('focus');
@@ -6269,56 +6271,84 @@ var Console = {
         return {
             'log': log,
             'onInput': function(callback) {
-                inputCallback = callback;
+                inputCallbacks.push(callback);
+            },
+            'onChange': function(callback) {
+                onChangeCallbacks.push(callback);
             }
         }
     },
 
-    'attach' : function(cons, client) {
+    'attach' : function(cons, client, scope) {
+
+        var attachClient = function() {
+
+            client.on('connect', function() { cons.log('Connected!'); });
+            client.on('disconnect', function() { cons.log('Disconnected!'); });
+
+            client.receive(function(data) {
+
+                if (data.cmd == 'message') {
+                    if (data.token == 'uptime') {
+                        var t = data.arg;
+                        var secs = t / 1000;
+                        var mins = secs / 60;
+                        var hours = mins / 60;
+                        var days = hours / 24;
+                        var str = days > 1 ? (Math.floor(days) + " days") :
+                                  hours > 1 ? (Math.floor(hours) + " hours") :
+                                  mins > 1 ? (Math.floor(mins) + " minutes") :
+                                  Math.floor(secs) + " seconds";
+                        cons.log('Up for ' + str);
+                    }
+                    else {
+                       cons.log(data.arg);
+                    }
+                }
+                else if (data.cmd) {
+                    cons.log(data.cmd);
+                }
+                else {
+                    cons.log("Unknown server response!");
+                }
+
+            });
+        };
+
+        var evalInScope = function(text) {
+
+            var script = "this" + text;
+
+            var f = function() {
+                return eval(script);
+            };
+
+            cons.log(f.call(scope));
+
+        };
+
 
         cons.onInput(function(text) {
 
-            var strs = text.split(' ');
-            var request = {};
-            request.cmd = strs.shift();
-            request.arg = strs.join(' ');
-            request.token = request.cmd
+            if (text[0] === ".") {
 
-            client.send(request);
+                evalInScope(text);
 
-        });
+            } else {
 
-        client.on('connect', function() { cons.log('Connected!'); });
-        client.on('disconnect', function() { cons.log('Disconnected!'); });
+                var strs = text.split(' ');
+                var request = {};
+                request.cmd = strs.shift();
+                request.arg = strs.join(' ');
+                request.token = request.cmd
+                client.send(request);
 
-        client.receive(function(data) {
-
-            if (data.cmd == 'message') {
-                if (data.token == 'uptime') {
-                    var t = data.arg;
-                    var secs = t / 1000;
-                    var mins = secs / 60;
-                    var hours = mins / 60;
-                    var days = hours / 24;
-                    var str = days > 1 ? (Math.floor(days) + " days") :
-                              hours > 1 ? (Math.floor(hours) + " hours") :
-                              mins > 1 ? (Math.floor(mins) + " minutes") :
-                              Math.floor(secs) + " seconds";
-                    cons.log('Up for ' + str);
-                }
-                else {
-                   cons.log(data.arg);
-                }
-            }
-            else if (data.cmd) {
-                cons.log(data.cmd);
-            }
-            else {
-                cons.log("Unknown server response!");
             }
 
         });
-    
+
+        attachClient();
+
     }
 
 };
@@ -7207,82 +7237,196 @@ THREE.ShaderFlares={lensFlareVertexTexture:{vertexShader:"uniform lowp int rende
 lensFlare:{vertexShader:"uniform lowp int renderType;\nuniform vec3 screenPosition;\nuniform vec2 scale;\nuniform float rotation;\nattribute vec2 position;\nattribute vec2 uv;\nvarying vec2 vUV;\nvoid main() {\nvUV = uv;\nvec2 pos = position;\nif( renderType == 2 ) {\npos.x = cos( rotation ) * position.x - sin( rotation ) * position.y;\npos.y = sin( rotation ) * position.x + cos( rotation ) * position.y;\n}\ngl_Position = vec4( ( pos * scale + screenPosition.xy ).xy, screenPosition.z, 1.0 );\n}",
 fragmentShader:"precision mediump float;\nuniform lowp int renderType;\nuniform sampler2D map;\nuniform sampler2D occlusionMap;\nuniform float opacity;\nuniform vec3 color;\nvarying vec2 vUV;\nvoid main() {\nif( renderType == 0 ) {\ngl_FragColor = vec4( texture2D( map, vUV ).rgb, 0.0 );\n} else if( renderType == 1 ) {\ngl_FragColor = texture2D( map, vUV );\n} else {\nfloat visibility = texture2D( occlusionMap, vec2( 0.5, 0.1 ) ).a;\nvisibility += texture2D( occlusionMap, vec2( 0.9, 0.5 ) ).a;\nvisibility += texture2D( occlusionMap, vec2( 0.5, 0.9 ) ).a;\nvisibility += texture2D( occlusionMap, vec2( 0.1, 0.5 ) ).a;\nvisibility = ( 1.0 - visibility / 4.0 );\nvec4 texture = texture2D( map, vUV );\ntexture.a *= opacity * visibility;\ngl_FragColor = texture;\ngl_FragColor.rgb *= color;\n}\n}"}};
 
-var MainView = function($container) {
+var View = {
 
-    var width = $container.width();
-    var height = $container.height();
-    var viewAngle = 45;
-    var aspectRatio = width / height;
-    var near = 0.1;
-    var far = 10000;
+    'createScene': function(camera) {
 
-    var renderer = new THREE.WebGLRenderer();
-    var camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far);
-    var scene = new THREE.Scene();
+        var scene = new THREE.Scene();
+        scene.add(camera);
+        return scene;
+        
+    },
 
-    scene.add(camera);
+    'createCamera': function(viewport) {
 
-    camera.position.z = 300;
+        var viewAngle = 45;
+        var aspectRatio = viewport.width() / viewport.height();
+        var near = 0.1;
+        var far = 10000;
+        var camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far);
+        camera.position.z = 300;
 
-    renderer.setSize(width, height);
+        return camera;
 
-    $container.append(renderer.domElement);
+    },
 
-    // set up the sphere vars
-    var radius = 50,
-        segments = 16,
-        rings = 16;
+    'createRenderer': function(viewport) {
 
-    var sphereMaterial =
-      new THREE.MeshLambertMaterial(
-        {
-          color: 0xCC0000
-        });
+        var renderer = new THREE.WebGLRenderer();
+        viewport.appendRenderer(renderer);
+        renderer.setSize(viewport.width(), viewport.height());
 
-    // create a new mesh with
-    // sphere geometry - we will cover
-    // the sphereMaterial next!
-    var sphere = new THREE.Mesh(
+        return renderer;
 
-      new THREE.SphereGeometry(
-        radius,
-        segments,
-        rings),
+    },
 
-      sphereMaterial);
+    'Viewport': function($elem) {
 
-    // add the sphere to the scene
-    scene.add(sphere);
+        return  {
+
+            'width': function() { return $elem.width(); },
+            'height': function() { return $elem.height(); },
+            'appendRenderer': function(renderer) { $elem.append(renderer.domElement); }
+
+        };
+
+    },
+
+    'renderFunc': function(options) {
+
+        var renderer = options.renderer;
+        var scene = options.scene;
+        var camera = options.camera;
+
+        return function() {
+
+            renderer.render(scene, camera);
+
+        };
+
+    },
+
+    'World': function(scene) {
+
+        // set up the sphere vars
+        var radius = 50,
+            segments = 16,
+            rings = 16;
+
+        var sphereMaterial =
+          new THREE.MeshLambertMaterial(
+            {
+              color: 0xCC0000
+            });
+
+        // create a new mesh with
+        // sphere geometry - we will cover
+        // the sphereMaterial next!
+        var sphere = new THREE.Mesh(
+
+          new THREE.SphereGeometry(
+            radius,
+            segments,
+            rings),
+
+          sphereMaterial);
+
+        // add the sphere to the scene
+        scene.add(sphere);
 
 
 
-    // create a point light
-var pointLight =
-  new THREE.PointLight(0xFFFFFF);
+        // create a point light
+        var pointLight =
+          new THREE.PointLight(0xFFFFFF);
 
-// set its position
-pointLight.position.x = 10;
-pointLight.position.y = 50;
-pointLight.position.z = 130;
+        // set its position
+        pointLight.position.x = 10;
+        pointLight.position.y = 50;
+        pointLight.position.z = 130;
 
-// add to the scene
-scene.add(pointLight);
+        // add to the scene
+        scene.add(pointLight);
 
-
-
-renderer.render(scene, camera);
+    }
 };
 
 
-$(document).ready(function() {
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] ||
+                                      window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
 
-    var client = Client(io());
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+var Core = {
+
+    'Loop': function(func) {
+
+        var alive = true;
+        var prevtime = Date.now();
+
+        var internalloop = function()
+        {
+            if (!alive)
+                return;
+            
+            requestAnimationFrame(internalloop);
+            
+            var currtime = Date.now();
+            var deltatime = currtime - prevtime;
+            prevtime = currtime;
+
+            try {
+                func(deltatime);
+            } catch (e) {
+                alive = false;
+                throw e;
+            }
+
+        };
+
+        internalloop();
+
+        return {
+            kill: function() { alive = false; }
+        };
+
+    }
+
+};
+
+if (typeof module !== 'undefined') {
+    module.exports = {
+        'Loop': Core.Loop
+    };
+}
+$(document).ready(function() {
     
+    var viewport = View.Viewport($('#main'));
+    var camera = View.createCamera(viewport);
+    var scene = View.createScene(camera);
+
     Console.attach(
         Console.create($('#console')),
-        client
+        Client(io()),
+        {
+            'camera': camera,
+            'mainloop': Core.Loop(
+                View.renderFunc({
+                    'renderer': View.createRenderer(viewport),
+                    'scene': scene,
+                    'camera': camera
+                })),
+            'world': View.World(scene)
+        }
     );
-
-    MainView($('#main'));
 
 });

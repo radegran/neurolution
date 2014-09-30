@@ -50,24 +50,26 @@ var Console = {
             }
         }
 
-        var inputCallback = function() {};
+        var inputCallbacks = [];
+        var onChangeCallbacks = [];
+
         $input.trigger('focus');
         $input.keydown(function (e) {
 
             if (e.which == 13) {
                 // Enter
-                if (inputCallback) {
-                    var text = $input.val();
-                    inputCallback(text);
-                    log("> " + text);
-                    $input.val('');
-                }
+                var text = $input.val();
+                log("> " + text);
+                $input.val('');
+                inputCallbacks.forEach(function(cb) { cb(text); });
+  
             } else if (e.which == 27) {
                 // ESC
                 $input.trigger('blur');
             }
         });
 
+        $input.on('change', function() { onChangeCallbacks.forEach(function(cb) { cb($input.val()); }); });
         $input.on('focus', function() { $container.animate({'height': '50%'}, 150); });
         $input.on('blur', function() { $container.animate({'height': '16px'}, 150); });
         $input.trigger('focus');
@@ -75,56 +77,84 @@ var Console = {
         return {
             'log': log,
             'onInput': function(callback) {
-                inputCallback = callback;
+                inputCallbacks.push(callback);
+            },
+            'onChange': function(callback) {
+                onChangeCallbacks.push(callback);
             }
         }
     },
 
-    'attach' : function(cons, client) {
+    'attach' : function(cons, client, scope) {
+
+        var attachClient = function() {
+
+            client.on('connect', function() { cons.log('Connected!'); });
+            client.on('disconnect', function() { cons.log('Disconnected!'); });
+
+            client.receive(function(data) {
+
+                if (data.cmd == 'message') {
+                    if (data.token == 'uptime') {
+                        var t = data.arg;
+                        var secs = t / 1000;
+                        var mins = secs / 60;
+                        var hours = mins / 60;
+                        var days = hours / 24;
+                        var str = days > 1 ? (Math.floor(days) + " days") :
+                                  hours > 1 ? (Math.floor(hours) + " hours") :
+                                  mins > 1 ? (Math.floor(mins) + " minutes") :
+                                  Math.floor(secs) + " seconds";
+                        cons.log('Up for ' + str);
+                    }
+                    else {
+                       cons.log(data.arg);
+                    }
+                }
+                else if (data.cmd) {
+                    cons.log(data.cmd);
+                }
+                else {
+                    cons.log("Unknown server response!");
+                }
+
+            });
+        };
+
+        var evalInScope = function(text) {
+
+            var script = "this" + text;
+
+            var f = function() {
+                return eval(script);
+            };
+
+            cons.log(f.call(scope));
+
+        };
+
 
         cons.onInput(function(text) {
 
-            var strs = text.split(' ');
-            var request = {};
-            request.cmd = strs.shift();
-            request.arg = strs.join(' ');
-            request.token = request.cmd
+            if (text[0] === ".") {
 
-            client.send(request);
+                evalInScope(text);
 
-        });
+            } else {
 
-        client.on('connect', function() { cons.log('Connected!'); });
-        client.on('disconnect', function() { cons.log('Disconnected!'); });
+                var strs = text.split(' ');
+                var request = {};
+                request.cmd = strs.shift();
+                request.arg = strs.join(' ');
+                request.token = request.cmd
+                client.send(request);
 
-        client.receive(function(data) {
-
-            if (data.cmd == 'message') {
-                if (data.token == 'uptime') {
-                    var t = data.arg;
-                    var secs = t / 1000;
-                    var mins = secs / 60;
-                    var hours = mins / 60;
-                    var days = hours / 24;
-                    var str = days > 1 ? (Math.floor(days) + " days") :
-                              hours > 1 ? (Math.floor(hours) + " hours") :
-                              mins > 1 ? (Math.floor(mins) + " minutes") :
-                              Math.floor(secs) + " seconds";
-                    cons.log('Up for ' + str);
-                }
-                else {
-                   cons.log(data.arg);
-                }
-            }
-            else if (data.cmd) {
-                cons.log(data.cmd);
-            }
-            else {
-                cons.log("Unknown server response!");
             }
 
         });
-    
+
+        attachClient();
+
     }
 
 };

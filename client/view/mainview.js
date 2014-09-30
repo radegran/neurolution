@@ -1,66 +1,104 @@
-var MainView = function($container) {
+var View = {
 
-    var width = $container.width();
-    var height = $container.height();
-    var viewAngle = 45;
-    var aspectRatio = width / height;
-    var near = 0.1;
-    var far = 10000;
+    'createScene': function(camera) {
 
-    var renderer = new THREE.WebGLRenderer();
-    var camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far);
-    var scene = new THREE.Scene();
+        var scene = new THREE.Scene();
+        scene.add(camera);
+        return scene;
+        
+    },
 
-    scene.add(camera);
+    'createCamera': function(viewport) {
 
-    camera.position.z = 300;
+        var viewAngle = 45;
+        var aspectRatio = viewport.width() / viewport.height();
+        var near = 0.1;
+        var far = 10000;
+        var camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far);
+        camera.position.z = 300;
 
-    renderer.setSize(width, height);
+        return camera;
 
-    $container.append(renderer.domElement);
+    },
 
-    // set up the sphere vars
-    var radius = 50,
-        segments = 16,
-        rings = 16;
+    'createRenderer': function(viewport) {
 
-    var sphereMaterial =
-      new THREE.MeshLambertMaterial(
-        {
-          color: 0xCC0000
-        });
+        var renderer = new THREE.WebGLRenderer();
+        viewport.appendRenderer(renderer);
+        renderer.setSize(viewport.width(), viewport.height());
 
-    // create a new mesh with
-    // sphere geometry - we will cover
-    // the sphereMaterial next!
-    var sphere = new THREE.Mesh(
+        return renderer;
 
-      new THREE.SphereGeometry(
-        radius,
-        segments,
-        rings),
+    },
 
-      sphereMaterial);
+    'Viewport': function($elem) {
 
-    // add the sphere to the scene
-    scene.add(sphere);
+        return  {
+
+            'width': function() { return $elem.width(); },
+            'height': function() { return $elem.height(); },
+            'appendRenderer': function(renderer) { $elem.append(renderer.domElement); }
+
+        };
+
+    },
+
+    'renderFunc': function(options) {
+
+        var renderer = options.renderer;
+        var scene = options.scene;
+        var camera = options.camera;
+
+        return function() {
+
+            renderer.render(scene, camera);
+
+        };
+
+    },
+
+    'World': function(scene) {
+
+        // set up the sphere vars
+        var radius = 50,
+            segments = 16,
+            rings = 16;
+
+        var sphereMaterial =
+          new THREE.MeshLambertMaterial(
+            {
+              color: 0xCC0000
+            });
+
+        // create a new mesh with
+        // sphere geometry - we will cover
+        // the sphereMaterial next!
+        var sphere = new THREE.Mesh(
+
+          new THREE.SphereGeometry(
+            radius,
+            segments,
+            rings),
+
+          sphereMaterial);
+
+        // add the sphere to the scene
+        scene.add(sphere);
 
 
 
-    // create a point light
-var pointLight =
-  new THREE.PointLight(0xFFFFFF);
+        // create a point light
+        var pointLight =
+          new THREE.PointLight(0xFFFFFF);
 
-// set its position
-pointLight.position.x = 10;
-pointLight.position.y = 50;
-pointLight.position.z = 130;
+        // set its position
+        pointLight.position.x = 10;
+        pointLight.position.y = 50;
+        pointLight.position.z = 130;
 
-// add to the scene
-scene.add(pointLight);
+        // add to the scene
+        scene.add(pointLight);
 
-
-
-renderer.render(scene, camera);
+    }
 };
 
