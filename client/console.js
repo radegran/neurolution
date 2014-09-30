@@ -37,6 +37,8 @@ var Console = {
         $container.append($prompt);
         $prompt.append($input);
 
+        var promptText = "> ";
+
         var log = function(message) {
 
             var logline = function(line) {
@@ -50,39 +52,122 @@ var Console = {
             }
         }
 
-        var inputCallbacks = [];
-        var onChangeCallbacks = [];
+        var onEnterCallbacks = [];
+        var onTabCallbacks = [];
 
         $input.trigger('focus');
         $input.keydown(function (e) {
 
             if (e.which == 13) {
+                
                 // Enter
                 var text = $input.val();
-                log("> " + text);
+                log(promptText + text);
                 $input.val('');
-                inputCallbacks.forEach(function(cb) { cb(text); });
+                onEnterCallbacks.forEach(function(cb) { cb(text); });
   
             } else if (e.which == 27) {
+                
                 // ESC
                 $input.trigger('blur');
+
+            } else if (e.which == 9) {
+
+                // TAB
+                onTabCallbacks.forEach(function(cb) { cb($input.val()); });
+                return false;
+
             }
         });
 
-        $input.on('change', function() { onChangeCallbacks.forEach(function(cb) { cb($input.val()); }); });
         $input.on('focus', function() { $container.animate({'height': '50%'}, 150); });
         $input.on('blur', function() { $container.animate({'height': '16px'}, 150); });
         $input.trigger('focus');
 
         return {
             'log': log,
-            'onInput': function(callback) {
-                inputCallbacks.push(callback);
+            'onEnter': function(callback) {
+                onEnterCallbacks.push(callback);
             },
-            'onChange': function(callback) {
-                onChangeCallbacks.push(callback);
+            'onTab': function(callback) {
+                onTabCallbacks.push(callback);
+            },
+            'text': function(text) {
+                $input.val(text);
+            },
+            'promptText': function() {
+                return promptText;
             }
         }
+    },
+
+    'getTabCompletions': function(text, scope) {
+
+        if (text[0] !== '.') {
+            return [];
+        }
+
+        var splits = text.split('.');
+        var path = splits.slice(1, -1);
+        var leaf = splits.slice(-1)[0];
+
+        var prefix = '';
+        var cursor = scope;
+        
+        while (path.length > 0) {
+
+            // Iterate to leaf level
+
+            var key = path.splice(0, 1)[0];
+            prefix += '.' + key;
+
+            if (!cursor.hasOwnProperty(key)) {
+
+                // Early exit: Path does not match object hierarchy
+                return [];
+
+            }
+
+            cursor = cursor[key];
+        }
+
+        var findLeafCompletions = function(keyprefix, obj, grandprefix) {
+
+            var list = [];
+
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) {
+
+                    if (key.indexOf(keyprefix) == 0) {
+
+                        var suffix = (Object.prototype.toString.call(obj[key]) === '[object Function]') ? '(' : '';
+                        list.push(grandprefix + '.' + key + suffix);
+
+                    }
+
+                }
+            }
+
+            return list;
+    
+        };
+        
+        var completions = findLeafCompletions(leaf, cursor, prefix);
+
+        if (completions.length == 1 && completions[0] === text) {
+
+            var deeperCompletions = findLeafCompletions('', cursor[leaf], text);
+
+            if (deeperCompletions.length > 0) {
+
+                return deeperCompletions;
+
+            }
+
+        }
+
+        return completions;
+
     },
 
     'attach' : function(cons, client, scope) {
@@ -129,12 +214,15 @@ var Console = {
                 return eval(script);
             };
 
-            cons.log(f.call(scope));
+            try {
+                cons.log(f.call(scope));
+            } catch (err) {
+                cons.log(err);
+            } 
 
         };
 
-
-        cons.onInput(function(text) {
+        cons.onEnter(function(text) {
 
             if (text[0] === ".") {
 
@@ -152,6 +240,34 @@ var Console = {
             }
 
         });
+
+        cons.onTab(function(text) {
+
+            if (text[0] === ".") {
+
+                var completions = Console.getTabCompletions(text, scope);
+                
+                if (completions.length == 1) {
+
+                    cons.text(completions[0]);
+
+                } else {
+
+                    if (completions.length > 1) {
+
+                        cons.log(cons.promptText() + text);
+
+                    }
+
+                    completions.forEach(function(completion) { cons.log(completion); });
+
+                }
+
+            }
+            
+        });
+
+        cons.log("Press '.[TAB]' for interaction.")
 
         attachClient();
 
