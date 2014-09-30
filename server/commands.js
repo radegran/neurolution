@@ -48,9 +48,17 @@ var TestDb = function(db) {
                     db.remove(obj);                    
                 }
 
-                db.save({'id': 'test', 'counter': counter+1});
+                db.save({'id': 'test', 'counter': counter+1}, function(obj) {
+                    
+                    if (!obj) {
+                        response.sendMessage("Oops. Something went wrong...");
+                    }
+                    else {
+                        response.sendMessage("Counter: " + counter);                        
+                    }
 
-                response.sendMessage("Counter: " + counter);
+                });
+
 
             });
 

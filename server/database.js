@@ -13,14 +13,14 @@ var DataBase = function(nodeMongojs) {
 
     var db = nodeMongojs(connectionString, ['users']);
 
+    var errorMessage = null;
+
     db.users.findOne({'id':'test'}, function(e) {
         if (e) {
 
             // Assume there is no mongo server running.
-            // Falling back to nedb.
-
-            console.log("No mongodb server!");
-            throw e;
+            errorMessage = "WARNING: No mongodb server!";
+            console.log(errorMessage);
         }
     });
 
@@ -29,11 +29,12 @@ var DataBase = function(nodeMongojs) {
         db.users.save(doc, function(err, user) {
 
             if (err) {
-                console.log(err);
-                throw new Error(err);
+                console.log(errorMessage || err);
             }
 
-            if (callback) callback(user);
+            if (callback) {
+                callback(user);                
+            }
 
         });
 
@@ -41,7 +42,13 @@ var DataBase = function(nodeMongojs) {
 
     var remove = function(doc, callback) {
 
-        db.users.remove(doc);
+        db.users.remove(doc, function(err) {
+
+            if (err) {
+                console.log(errorMessage || err);
+            }
+
+        });
 
     };
 
@@ -50,11 +57,12 @@ var DataBase = function(nodeMongojs) {
         db.users.findOne(doc, function(err, user) {
 
             if (err) {
-                console.log(err);
-                throw new Error(err);
+                console.log(errorMessage || err);
             }
-
-            if (callback) callback(user);
+            
+            if (callback) {
+                callback(user);
+            }
 
         });
 
