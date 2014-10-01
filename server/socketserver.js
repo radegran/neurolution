@@ -1,11 +1,15 @@
 var SocketServer = function(options) {
 
     var mainSocket = options.socket;
-    var currentTime = options.timer || Date.now;
-    var commands = options.commands || {};
-
-    var startTime = currentTime();
+    var commands = {};
     var clientSockets = [];
+
+    // Store commands in dictionary
+    (options.commands || []).forEach(function(command) {
+
+        commands[command.keyword] = command;
+
+    });
 
     mainSocket.on('connection', function(clientSocket) {
 
@@ -55,7 +59,7 @@ var SocketServer = function(options) {
 
             } else {
 
-                sendMessage(clientSocket, "Unknown command, try 'help'");
+                sendMessage(clientSocket, "Unknown command, try [TAB]");
 
             }
 

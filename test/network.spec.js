@@ -103,13 +103,11 @@ describe("Network", function() {
 
             var mock = SocketMock();
             var clientMock = SocketMock();
-            var command = {
-                'id': 'hello',
-                'handler': function(response) {
+            var command = Commands.Command('hello', function(response) {
                     response.sendMessage('world!');
-                }
-            };
-            var s = SocketServer({'socket': mock, 'commands': {'hello': command}});
+                });
+
+            var s = SocketServer({'socket': mock, 'commands': [command]});
 
             mock.call('connection', clientMock);
 
@@ -126,14 +124,11 @@ describe("Network", function() {
             var client2 = SocketMock();
             var client3 = SocketMock();
 
-            var command = {
-                'id': 'broadcast',
-                'handler': function(response, arg) {
+            var command = Commands.Command('broadcast', function(response, arg) {
                     response.broadcastMessage('ALL: ' + arg);
-                }
-            };
+                });
 
-            var s = SocketServer({'socket': mock, 'commands': {'broadcast': command}});
+            var s = SocketServer({'socket': mock, 'commands': [command]});
 
             mock.call('connection', client1);
             mock.call('connection', client2);
@@ -153,13 +148,11 @@ describe("Network", function() {
 
             var mock = SocketMock();
 
-            var command = {
-                'id': 'test',
-                'handler': function(response, arg) {
+            var command = Commands.Command('test', function(response, arg) {
                     response.sendMessage('___');
-                }
-            };
-            var s = SocketServer({'socket': mock, 'commands': {'test': command}});
+                });
+            
+            var s = SocketServer({'socket': mock, 'commands': [command]});
 
             var client = SocketMock();
             mock.call('connection', client);

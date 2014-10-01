@@ -6297,12 +6297,8 @@ var Console = {
 
     'getTabCompletions': function(text, scope) {
 
-        if (text[0] !== '.') {
-            return [];
-        }
-
         var splits = text.split('.');
-        var path = splits.slice(1, -1);
+        var path = splits.slice(0, -1);
         var leaf = splits.slice(-1)[0];
 
         var prefix = '';
@@ -6327,6 +6323,10 @@ var Console = {
 
         var findLeafCompletions = function(keyprefix, obj, grandprefix) {
 
+            var trimLeadingDot = function(str) {
+                return str.replace(/^\./, '');
+            };
+
             var list = [];
 
             for (key in obj) {
@@ -6335,7 +6335,8 @@ var Console = {
                     if (key.indexOf(keyprefix) == 0) {
 
                         var suffix = (Object.prototype.toString.call(obj[key]) === '[object Function]') ? '(' : '';
-                        list.push(grandprefix + '.' + key + suffix);
+                        var completion = grandprefix + '.' + key + suffix;
+                        list.push(trimLeadingDot(completion));
 
                     }
 
@@ -6402,7 +6403,7 @@ var Console = {
 
         var evalInScope = function(text) {
 
-            var script = "this" + text;
+            var script = "this." + text;
 
             var f = function() {
                 return eval(script);
@@ -6418,50 +6419,33 @@ var Console = {
 
         cons.onEnter(function(text) {
 
-            if (text[0] === ".") {
-
-                evalInScope(text);
-
-            } else {
-
-                var strs = text.split(' ');
-                var request = {};
-                request.cmd = strs.shift();
-                request.arg = strs.join(' ');
-                request.token = request.cmd
-                client.send(request);
-
-            }
+            evalInScope(text);
 
         });
 
         cons.onTab(function(text) {
 
-            if (text[0] === ".") {
+            var completions = Console.getTabCompletions(text, scope);
+            
+            if (completions.length == 1) {
 
-                var completions = Console.getTabCompletions(text, scope);
-                
-                if (completions.length == 1) {
+                cons.text(completions[0]);
 
-                    cons.text(completions[0]);
+            } else {
 
-                } else {
+                if (completions.length > 1) {
 
-                    if (completions.length > 1) {
-
-                        cons.log(cons.promptText() + text);
-
-                    }
-
-                    completions.forEach(function(completion) { cons.log(completion); });
+                    cons.log(cons.promptText() + text);
 
                 }
+
+                completions.forEach(function(completion) { cons.log(completion); });
 
             }
             
         });
 
-        cons.log("Press '.[TAB]' for interaction.")
+        cons.log("Hit [TAB] for interaction.");
 
         attachClient();
 
@@ -7482,6 +7466,108 @@ var View = {
             clearTimeout(id);
         };
 }());
+var Commands = 
+{
+
+    'Command': function(keyword, handler) {
+
+        var command = {
+            'keyword': keyword,
+            'handler': handler || function(response) {}
+        };
+
+        return command;
+    },
+
+    'UpTime': function(currentTimeFunc) {
+
+        currentTimeFunc = currentTimeFunc || Date.now;
+        var startTime = currentTimeFunc();
+
+        return Commands.Command('uptime', function(response) { 
+                response.sendMessage(currentTimeFunc() - startTime); 
+            });
+
+    },
+
+    'TestDb': function(db) {
+
+        return Commands.Command('testdb', function(response, arg) {
+
+            db.find({'id': 'test'}, function(obj) {
+
+                var counter = 0;
+
+                if (obj)
+                {
+                    counter = obj.counter;
+                    db.remove(obj);                    
+                }
+
+                db.save({'id': 'test', 'counter': counter+1}, function(obj) {
+                    
+                    if (!obj) {
+                        response.sendMessage("Oops. Something went wrong...");
+                    }
+                    else {
+                        response.sendMessage("Counter: " + counter);                        
+                    }
+
+                });
+
+            });
+
+        });
+
+    },
+
+    'get': function(db) {
+
+        var commands = [
+
+            Commands.Command('ping', function(response) { 
+                    response.sendMessage('pong');
+                }),
+            Commands.UpTime(),
+            Commands.Command('message', function(response, arg) {
+                    response.broadcastMessage('someone: ' + arg);
+                    response.sendMessage('you: ' + arg);
+                }),
+            Commands.TestDb(db)
+
+        ];
+
+        return commands;
+
+    },
+
+    'getDictionary': function(client) {
+
+        var commands = Commands.get(null);
+        var dict = {};
+
+        commands.forEach(function(c) { dict[c.keyword] = function(arg) {
+
+                client.send({
+                    'cmd': c.keyword,
+                    'arg': arg,
+                    'token': c.keyword
+                });
+
+            }; 
+        });
+        
+        return dict;
+
+    }
+
+};
+
+if (typeof module !== 'undefined') {
+    module.exports = {
+        'get': Commands.get
+    };
+}
 var Core = {
 
     'Loop': function(func) {
@@ -7529,10 +7615,11 @@ $(document).ready(function() {
     var viewport = View.Viewport($('#main'));
     var camera = View.createCamera(viewport);
     var scene = View.createScene(camera);
+    var client = Client(io());
 
     Console.attach(
         Console.create($('#console')),
-        Client(io()),
+        client,
         {
             'camera': camera,
             'mainloop': Core.Loop(
@@ -7541,7 +7628,8 @@ $(document).ready(function() {
                     'scene': scene,
                     'camera': camera
                 })),
-            'world': View.World(scene)
+            'world': View.World(scene),
+            'server': Commands.getDictionary(client)
         }
     );
 

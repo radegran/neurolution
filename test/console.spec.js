@@ -44,57 +44,57 @@ describe("Console", function() {
 
         });
 
-        it("should give no completions if not starting with a dot", function() {
+        it("should give no completions if no match", function() {
 
-            verify('root', []);
+            verify('oot', []);
 
         });
 
         it("should give completions for root level", function() {
 
-            verify('.root', ['.root1', '.root2']);
+            verify('root', ['root1', 'root2']);
 
         });
 
         it("should give completions for leaf level", function() {
 
-            verify('.root1.le', ['.root1.leaf1', '.root1.leaf2']);
+            verify('root1.le', ['root1.leaf1', 'root1.leaf2']);
 
         });
 
         it("should give completions for a completion", function() {
 
-            verify('.root1', ['.root1.leaf1', '.root1.leaf2']);
+            verify('root1', ['root1.leaf1', 'root1.leaf2']);
 
         });
 
         it("should give same completion for completed leaf", function() {
 
-            verify('.root2.leaf', ['.root2.leaf']);
+            verify('root2.leaf', ['root2.leaf']);
 
         });
 
         it("should match with starting strings", function() {
 
-            verify('.leaf', ['.leafValue']);
+            verify('leaf', ['leafValue']);
 
         });
 
         it("should give completions if ending with dot", function() {
 
-            verify('.camera.', ['.camera.position']);
+            verify('camera.', ['camera.position']);
 
         });
 
         it("should give leaf completions if ending with dot", function() {
 
-            verify('.camera.position.', ['.camera.position.x', '.camera.position.y', '.camera.position.z']);
+            verify('camera.position.', ['camera.position.x', 'camera.position.y', 'camera.position.z']);
 
         });
 
         it("should give '(' suffix on function completions", function() {
 
-            verify('.hasfunc', ['.hasfunc.func(', '.hasfunc.int']);
+            verify('hasfunc', ['hasfunc.func(', 'hasfunc.int']);
 
         });
 
