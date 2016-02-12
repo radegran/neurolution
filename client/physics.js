@@ -57,7 +57,7 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
     // angle
     
     var pFrom, pVia, pTo, ang, restAng, p1Rot, dP1, p2Rot, dP2;
-    var W = 1000;
+    var W = 2000;
     
     
     for (var i = 0; i < ws.length; i++)
@@ -77,7 +77,7 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
 
         var angErr = angleDiff(ang, restAng);
         var corrAng = angErr * W * dt;
-        var corrAngVel = -10000*(angleDiff(ang, (ws[i]._prevAng || ang)));
+        var corrAngVel = -1000*(angleDiff(ang, (ws[i]._prevAng || ang)));
         
         var p1Orth = normalize(orth(p1));
         var p2Orth = normalize(orth(p2));

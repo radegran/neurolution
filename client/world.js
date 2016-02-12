@@ -148,6 +148,11 @@ var makeWorld = function(width, height, ps, cs, ws)
     );
     net.initialize();
     
+    var energyF = function(p, v)
+    {
+        return Math.pow(dist(v), 2)/2 + -G*p.y;  
+    };
+    
     world.score = 0;
     world.net = net;
     world.applyNN = function(verbose)
@@ -212,37 +217,39 @@ var makeWorld = function(width, height, ps, cs, ws)
         // var totHeight = ps.reduce(function(prev, curr) { return prev + curr.y - groundY; }, 0);
         // world.score += totHeight / ps.length;
     
-    var sumV = vs.reduce(function(prev, curr) { return add(curr, prev); }, p(0,0)); 
+        var sumV = vs.reduce(function(prev, curr) { return add(curr, prev); }, p(0,0)); 
         var avgV = scale(sumV, 1/vs.length);
         var energy = Math.pow(dist(avgV), 2)/2;
         //var energy = vs.reduce(function(prev, curr) { return prev + Math.pow(dist(curr), 2)/2; }, 0);
         energy += ps.reduce(function(prev, curr) {
             return prev + (-G)*curr.y; 
-            }, 0);
-        energy /= 100000;
+            }, 0)/ps.length;
+        
+        energy /= 10000;
+        
+        var eachEnergyAvg =0;
+        ps.forEach(function(p, i) { eachEnergyAvg += energyF(p, vs[i])});
+        eachEnergyAvg = eachEnergyAvg/ps.length / 10000;
         
         if (startPositionToLeft)
         {
-           world.score += com.x/1000 + energy; 
+           world.score += com.x/1000 + (energy-eachEnergyAvg/4); 
         }
         else
         {
             
-            var height = com.y/20;
+            var height = com.y/15;
             
             //var unsaturation = output.reduce(function(p, c) { return p + 1/Math.max(0.4, Math.abs(c-0.5))}, 0);
             
-            var newScore = energy + height
+            var newScore = (energy-eachEnergyAvg/4) + height
             
             if (!world._oldOutput)
             {
                 world._oldOutput = copyArrayValues(output);
             }
             
-            var sameOutput = true;
-            output.forEach(function(o, i) { if (o != world._oldOutput[i]) sameOutput = false;});
-            
-            world.score += newScore / (sameOutput ? 1.5 : 1);
+            world.score += newScore;
         }
         
     };

@@ -131,6 +131,9 @@ var Editor = function(canvas, width, height, clearF, lineF, dotF, angMuscleF, re
         rendertext("Klicka på en kant för att göra till en muskel", 10, 23, 'gray');
         rendertext("Klick/dra mellan två kanter för att göra med vinkelmuskel", 10, 13, 'gray');
         rendertext("Tryck på ENTER när du är klar!", 10, 3, 'gray');
+        lineF(p(300, 0), p(300,height), "lightgray");
+        rendertext("En figur skapad på den här sidan vill ta sig till höger", 10, height-10, 'gray');
+        rendertext("En figur skapad på den här sidan vill hoppa", 330, height - 10, 'gray');       
                 
         // ground
         renderObj(ground.groundPs, ground.groundCs);
