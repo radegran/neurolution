@@ -99,6 +99,12 @@ var Editor = function(canvas, width, height, clearF, lineF, dotF, angMuscleF, re
     {
         if (e.keyCode == 13)
         {
+            if (ps.length == 0)
+            {
+                window.load(window.localStorage.getItem("obj"));
+                return;
+            }
+            
             $(document).off("keydown");
             $("canvas").off("mousedown");
             rendertext("Nu tränas det! Tryck sen på R för att simulera igen och N för att träna mer.", 10, 170, 'black', 20);
@@ -106,6 +112,7 @@ var Editor = function(canvas, width, height, clearF, lineF, dotF, angMuscleF, re
             // Serialize to console
             var obj = {"ps": ps, "cs": cs, "ws": ws};
             console.log(JSON.stringify(obj));
+            window.localStorage.setItem("obj", JSON.stringify(obj));
             
             setTimeout(function() { doneCallback(ps, cs, ws) }, 100);
         }

@@ -21,7 +21,7 @@ var stepObj = function(dt, ps, vs, as)
 
 
 var G = -550;
-var Cp = 50;
+var Cp = 100;
 var Cv = 2;
 
 var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
@@ -98,7 +98,8 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         {
             // (-as[i].y)/1000 is pressure kind of
             //as[i].x -= vs[i].x * dt * Math.min(5, Math.max(15, (-as[i].y)/100));
-            as[i].x += - vs[i].x / dt;
+            var frictionForce = -vs[i].x / ( dt/1000 );
+            as[i].x += frictionForce;
         }
     }
     

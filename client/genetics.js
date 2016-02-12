@@ -82,7 +82,7 @@ var mutate = function(individs, prob)
         {
             if (Math.random() < prob)
             {
-                genes[j] += 30*(Math.random() - 0.5);
+                genes[j] += 10*(Math.random() - 0.5);
             }
         }
         mutant.net.set(genes);
