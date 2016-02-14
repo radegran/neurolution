@@ -20,8 +20,8 @@ var stepObj = function(dt, ps, vs, as)
 };
 
 
-var G = -450;
-var Cp = 1000;
+var G = -250;
+var Cp = 500;
 var Cv = 1;
 
 var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
@@ -62,7 +62,7 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
     // angle
     
     var pFrom, pVia, pTo, ang, restAng, p1Rot, dP1, p2Rot, dP2;
-    var W = 10000;
+    var W = 2000;
     
     
     for (var i = 0; i < ws.length; i++)
@@ -83,7 +83,7 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         var angErr = angleDiff(ang, restAng);
         var corrAng = W * angErr;
         var angleVel = angleDiff(ang, (ws[i]._prevAng || ang)) / (dt / 1000);
-        var corrAngVel = 2 * Math.sqrt(W) * angleVel;
+        var corrAngVel = 5*2 * Math.sqrt(W) * angleVel;
         
         var p1Orth = normalize(orth(p1));
         var p2Orth = normalize(orth(p2));
@@ -103,9 +103,12 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         if (penetration >= 0)
         {
             
-            var force = -vs[i].x / ( dt/1000 );
-            var ratio = Math.min(-2*G, Math.max(0, -as[i].y)) / (-2*G);
-            as[i].x = (as[i].x*(1-ratio) + force*ratio);
+            // var force = -vs[i].x / ( dt/1000 );
+            // var ratio = Math.min(-10*G, Math.max(0, -as[i].y)) / (-10*G);
+            // as[i].x = (as[i].x*(1-ratio) + force*ratio);
+            
+            as[i].x = 0;
+            vs[i].x = 0;
         }
     }
     

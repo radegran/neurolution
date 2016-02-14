@@ -217,18 +217,32 @@ var makeWorld = function(width, height, ps, cs, ws)
         // var totHeight = ps.reduce(function(prev, curr) { return prev + curr.y - groundY; }, 0);
         // world.score += totHeight / ps.length;
     
-        var sumV = vs.reduce(function(prev, curr) { return add(curr, prev); }, p(0,0)); 
-        var avgV = scale(sumV, 1/vs.length);
-        
-        var kineticE = Math.pow(dist(avgV), 2)/2;
-        
-        var potentialE = ps.reduce(function(prev, curr) {
-            return prev + (-G)*curr.y; 
-            }, 0)/ps.length;
+        // WHOLE OBJECT
+        // var sumV = vs.reduce(function(prev, curr) { return add(curr, prev); }, p(0,0)); 
+        // var avgV = scale(sumV, 1/vs.length);
+        // 
+        // var kineticE = Math.pow(dist(avgV), 2)/2;
+        // 
+        // var potentialE = ps.reduce(function(prev, curr) {
+        //     return prev + (-G)*curr.y; 
+        //     }, 0)/ps.length;
                 
+        // PER VERTEX 
+        var kineticE = vs.reduce(function(prev, curr) 
+        { 
+            return prev + Math.pow(dist(curr), 2)/2; 
+        }, 
+        0)/vs.length; 
+        
+        var potentialE = ps.reduce(function(prev, curr) 
+        {
+            return prev + (-G)*curr.y; 
+        }, 
+        0)/ps.length;
+        
         if (startPositionToLeft)
         {
-           world.score += com.x/1000 + (potentialE - kineticE)/10000; 
+           world.score += (com.x*(-G) - kineticE) / 10000; 
         }
         else
         {
