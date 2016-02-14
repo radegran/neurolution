@@ -21,7 +21,7 @@ var stepObj = function(dt, ps, vs, as)
 
 
 var G = -550;
-var Cp = 400;
+var Cp = 600;
 var Cv = 1;
 
 var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
