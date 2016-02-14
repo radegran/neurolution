@@ -199,7 +199,7 @@ var makeWorld = function(width, height, ps, cs, ws)
         
         ws.forEach(function(wElem, index) 
         { 
-            wElem.angle = wElem._angle + (Math.PI/4)*(output[index]-0.5); 
+            wElem.angle = wElem._angle + (Math.PI/2)*(output[index]-0.5); 
         });
         muscleIxs.forEach(function(mIx, index) 
         { 
@@ -219,37 +219,21 @@ var makeWorld = function(width, height, ps, cs, ws)
     
         var sumV = vs.reduce(function(prev, curr) { return add(curr, prev); }, p(0,0)); 
         var avgV = scale(sumV, 1/vs.length);
-        var energy = Math.pow(dist(avgV), 2)/2;
-        //var energy = vs.reduce(function(prev, curr) { return prev + Math.pow(dist(curr), 2)/2; }, 0);
-        energy += ps.reduce(function(prev, curr) {
+        
+        var kineticE = Math.pow(dist(avgV), 2)/2;
+        
+        var potentialE = ps.reduce(function(prev, curr) {
             return prev + (-G)*curr.y; 
             }, 0)/ps.length;
-        
-        energy /= 10000;
-        
-        var eachEnergyAvg =0;
-        ps.forEach(function(p, i) { eachEnergyAvg += energyF(p, vs[i])});
-        eachEnergyAvg = eachEnergyAvg/ps.length / 10000;
-        
+                
         if (startPositionToLeft)
         {
-           world.score += com.x/1000 + (energy-eachEnergyAvg/4); 
+           world.score += com.x/1000 + (potentialE - kineticE)/10000; 
         }
         else
         {
-            
-            var height = com.y/15;
-            
-            //var unsaturation = output.reduce(function(p, c) { return p + 1/Math.max(0.4, Math.abs(c-0.5))}, 0);
-            
-            var newScore = (energy-eachEnergyAvg/4) + height
-            
-            if (!world._oldOutput)
-            {
-                world._oldOutput = copyArrayValues(output);
-            }
-            
-            world.score += newScore;
+            var newScore = potentialE - kineticE;
+            world.score += newScore/10000;
         }
         
     };

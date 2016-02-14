@@ -21,8 +21,8 @@ var stepObj = function(dt, ps, vs, as)
 
 
 var G = -550;
-var Cp = 100;
-var Cv = 2;
+var Cp = 400;
+var Cv = 1;
 
 var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
 {
@@ -45,19 +45,24 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         diffv = scale(sub(v2, v1), 1/(lenv || 1e20));
         var prod = dot(diff, diffv);
         
-        var corr = scale(diff, dt*Cp*(len-restLen));
-        var corrv = scale(diff, dt*Cv*lenv*prod);
+        var corr = scale(diff, Cp*(len-restLen));
+        var corrv = scale(diff, Math.sqrt(Cp)*lenv*prod);
        
+        // a1.x += (corr.x + corrv.x);
+        // a1.y += (corr.y + corrv.y);
+        // a2.x -= (corr.x + corrv.x);
+        // a2.y -= (corr.y + corrv.y);
         a1.x += (corr.x + corrv.x);
         a1.y += (corr.y + corrv.y);
         a2.x -= (corr.x + corrv.x);
         a2.y -= (corr.y + corrv.y);
+
     } 
     
     // angle
     
     var pFrom, pVia, pTo, ang, restAng, p1Rot, dP1, p2Rot, dP2;
-    var W = 2000;
+    var W = 10000;
     
     
     for (var i = 0; i < ws.length; i++)
@@ -76,30 +81,30 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         ang = angle(p1, p2);
 
         var angErr = angleDiff(ang, restAng);
-        var corrAng = angErr * W * dt;
-        var corrAngVel = -1000*(angleDiff(ang, (ws[i]._prevAng || ang)));
+        var corrAng = W * angErr;
+        var angleVel = angleDiff(ang, (ws[i]._prevAng || ang)) / (dt / 1000);
+        var corrAngVel = 2 * Math.sqrt(W) * angleVel;
         
         var p1Orth = normalize(orth(p1));
         var p2Orth = normalize(orth(p2));
 
-        addMe(aFrom, scale(p1Orth, (corrAng - corrAngVel)));
-        addMe(aVia, scale(p1Orth, -(corrAng - corrAngVel)));
-        addMe(aTo, scale(p2Orth, -(corrAng - corrAngVel)));
-        addMe(aVia, scale(p2Orth, (corrAng - corrAngVel)));
+        addMe(aFrom, scale(p1Orth, (corrAng + corrAngVel)));
+        addMe(aVia, scale(p1Orth, -(corrAng + corrAngVel)));
+        addMe(aTo, scale(p2Orth, -(corrAng + corrAngVel)));
+        addMe(aVia, scale(p2Orth, (corrAng + corrAngVel)));
 
         ws[i]._prevAng = ang;
     }
     
-    // ground friction
+    // ground
     for (var i = 0; i < ps.length; i++)
     {
         var penetration = groundPs[0].y - ps[i].y;
         if (penetration >= 0)
         {
-            // (-as[i].y)/1000 is pressure kind of
-            //as[i].x -= vs[i].x * dt * Math.min(5, Math.max(15, (-as[i].y)/100));
-            var frictionForce = -vs[i].x / ( dt/1000 );
-            as[i].x += frictionForce;
+            
+            var force = -vs[i].x / ( dt/1000 );
+            as[i].x = force;
         }
     }
     

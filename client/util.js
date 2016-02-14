@@ -60,7 +60,7 @@ var angleDiff = function(a, b)
 
 var normalize = function(v)
 {
-    var l = dist(v);
+    var l = dist(v) || 1e20;
     return {x: v.x / l, y: v.y / l};  
 };
 

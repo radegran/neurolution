@@ -110,8 +110,8 @@ $(document).ready(function()
                 renderText,
                 pausSwitch);  
         };
-
-        $(document).on("keydown", function(e)
+        
+        var keydown = function(e)
         {
             if (e.keyCode == 27)
             {
@@ -120,18 +120,24 @@ $(document).ready(function()
             }
             if (e.keyCode == 82)
             {
+                // R
                 pausSwitch.toggle();
                 replay();
             }
             if (e.keyCode == 78)
             {
+                // N
                 pausSwitch.toggle();
+                
                 result = compete(info, e.shiftKey ? 30 : 3, population);
+                
                 netJson = result[0];
                 population = result[1]
                 replay();   
             }
-        })
+        };
+
+        $(document).on("keydown", keydown);
 
         replay();
 

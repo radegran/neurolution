@@ -5,7 +5,7 @@ var lineMaker = function(context, width, height)
         context.beginPath();
         context.moveTo(p1.x, height - p1.y);
         context.lineTo(p2.x, height - p2.y);
-        context.lineWidth = 1;
+        context.lineWidth = 1.5;
 
         // set line color
         context.strokeStyle = color || '#ff0000';
