@@ -104,7 +104,8 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         {
             
             var force = -vs[i].x / ( dt/1000 );
-            as[i].x = force;
+            var ratio = Math.min(-2*G, Math.max(0, -as[i].y)) / (-2*G);
+            as[i].x = (as[i].x*(1-ratio) + force*ratio);
         }
     }
     
