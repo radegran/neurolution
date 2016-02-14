@@ -20,7 +20,7 @@ var stepObj = function(dt, ps, vs, as)
 };
 
 
-var G = -550;
+var G = -450;
 var Cp = 1000;
 var Cv = 1;
 
