@@ -5,7 +5,7 @@ var mainloop = function(pausSwitch, callbackUpdate, callbackRender, iterations)
     var remaining = 0;
     var iteration = 0;
     
-    var modelStepTime = 10;
+    var modelStepTime = 5;
     
     var animFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||

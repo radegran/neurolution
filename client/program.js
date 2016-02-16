@@ -35,7 +35,7 @@ var simulate = function(
     var groundCs = world.ground.groundCs;
     
     var updateModel = function(dt)
-    {
+    {        
         setGravity(as, G);
         applyForces(dt, groundPs, groundCs, ps, vs, as, ws, cs, line);
         stepObj(dt, ps, vs, as);
