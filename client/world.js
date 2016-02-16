@@ -246,7 +246,7 @@ var makeWorld = function(width, height, ps, cs, ws)
         }
         else
         {
-            var newScore = potentialE - kineticE/10;
+            var newScore = potentialE - 0*kineticE/10;
             world.score += newScore/10000;
         }
         
