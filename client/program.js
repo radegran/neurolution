@@ -52,7 +52,7 @@ var simulate = function(
         // renderText(Energy + "", 10, 350);
     };
         
-    mainloop(pausSwitch, updateModel, render, 10000);
+    mainloop(pausSwitch, updateModel, render, 100000);
 };
 
 var evaluate = function(world, iterations)
