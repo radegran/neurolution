@@ -83,7 +83,7 @@ var applyForces = function(dt, groundPs, groundCs, ps, vs, as, ws, cs, line)
         var angErr = angleDiff(ang, restAng);
         var corrAng = W * angErr;
         var angleVel = angleDiff(ang, (ws[i]._prevAng || ang)) / (dt / 1000);
-        var corrAngVel = 10 * Math.sqrt(W) * angleVel;
+        var corrAngVel = 2 * Math.sqrt(W) * angleVel;
         
         var p1Orth = normalize(orth(p1));
         var p2Orth = normalize(orth(p2));
