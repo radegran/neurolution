@@ -242,7 +242,7 @@ var makeWorld = function(width, height, ps, cs, ws)
         
         if (startPositionToLeft)
         {
-           world.score += (com.x*(-G) - kineticE) / 10000; 
+           world.score += (5*com.x*(-G) - kineticE) / 100000; 
         }
         else
         {
