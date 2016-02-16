@@ -7,12 +7,17 @@ var setGravity = function(as, G)
     }
 };
 
+var minmax = function(val, min, max)
+{
+    return Math.min(Math.max(min, val), max);
+};
+
 var stepObj = function(dt, ps, vs, as)
 {
     for (var i = 0; i < vs.length; i++)
     {
-        vs[i].x += as[i].x * dt / 1000;
-        vs[i].y += as[i].y * dt / 1000;        
+        vs[i].x += minmax(as[i].x, 10*G, -10*G) * dt / 1000;
+        vs[i].y += minmax(as[i].y, 10*G, -10*G) * dt / 1000;        
         
         ps[i].x += vs[i].x * dt / 1000;
         ps[i].y += vs[i].y * dt / 1000;
